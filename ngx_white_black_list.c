@@ -623,10 +623,10 @@ ngx_ip_in_black_list(ngx_http_request_t *r)
 	ngx_uint_t						i;
 	ngx_slab_pool_t              	*shpool;
 	ngx_rbtree_node_t              *node;
-	ngx_network_addr_list_t			*pos_net_addr;
-	ngx_network_addr_node_t			*pos_data;
+	//ngx_network_addr_list_t			*pos_net_addr;
+	//ngx_network_addr_node_t			*pos_data;
 	ngx_white_black_list_ctx_t      *ctx;
-	ngx_white_black_list_node_t		*bln;
+	//ngx_white_black_list_node_t		*bln;
 	ngx_white_black_list_conf_t  	*lccf;
 	ngx_white_black_list_isvalid_t 	*valids;
 
@@ -675,8 +675,8 @@ ngx_dyn_black_delete_handler(ngx_http_request_t *r)
 	ngx_uint_t						i;
 	ngx_slab_pool_t              	*shpool;
 	ngx_rbtree_node_t              *node;
-	ngx_network_addr_list_t			*pos_net_addr;
-	ngx_network_addr_node_t			*pos_data;
+	//ngx_network_addr_list_t			*pos_net_addr;
+	//ngx_network_addr_node_t			*pos_data;
 	ngx_white_black_list_ctx_t      *ctx;
 	ngx_white_black_list_node_t		*bln;
 	ngx_white_black_list_conf_t  	*lccf;
@@ -730,7 +730,7 @@ ngx_dyn_black_delete_handler(ngx_http_request_t *r)
 			if (bln->is_dyn_black)
 			{
 				/*delete*/
-				if (bln->add_time + valids[i].forbidden_time < ngx_cached_time->sec)
+				if (bln->add_time + valids[i].forbidden_time < (uint64_t) ngx_cached_time->sec)
 				{
 					ngx_shmtx_lock(&shpool->mutex);
 					ngx_rbtree_delete(ctx->rbtree, node);
@@ -985,7 +985,7 @@ static char *ngx_http_dyn_black_set(ngx_conf_t *cf, ngx_command_t *cmd, void *co
 	ngx_uint_t                      i;
 	ngx_shm_zone_t              	*shm_zone;
 	ngx_white_black_list_conf_t  	*lccf = conf;
-	ngx_white_black_list_isvalid_t 	*valid, *valids;
+	ngx_white_black_list_isvalid_t 	*valids;
 
 	value = cf->args->elts;
 
@@ -1401,7 +1401,7 @@ ngx_int_t ngx_white_black_add_item(ngx_http_request_t *r, ngx_str_t *value, ngx_
 	buf_temp = ngx_pcalloc(r->pool,128);
 	if (ngx_ip_in_black_list(r) == NGX_OK)
 	{
-		reason->data = "the ip is exist!";
+		reason->data = (unsigned char*)"the ip is exist!";
 		reason->len = sizeof("the ip is exist!")-1;
 		return NGX_OK;
 	}
@@ -1418,7 +1418,7 @@ ngx_int_t ngx_white_black_add_item(ngx_http_request_t *r, ngx_str_t *value, ngx_
 	if (   value == NULL || zone_name ==NULL 
 		|| value->len==0 || zone_name->len==0)
 	{
-		reason->data = "add_item or zone_name is NULL!";
+		reason->data = (unsigned char *)"add_item or zone_name is NULL!";
 		reason->len = sizeof("add_item or zone_name is NULL!")-1;
 		return NGX_ERROR;
 	}
@@ -1435,7 +1435,7 @@ ngx_int_t ngx_white_black_add_item(ngx_http_request_t *r, ngx_str_t *value, ngx_
 	len = sizeof(ngx_cidr_t);
 	if (ngx_ptocidr(value, &cdir) == NGX_ERROR)
 	{
-		snprintf(buf_temp, 256, "ngx_ptocidr is failed! the ip=%s .", value->data);
+		ngx_snprintf(buf_temp, 256, "ngx_ptocidr is failed! the ip=%s .", value->data);
 		reason->data = buf_temp;
 		reason->len = ngx_strlen(buf_temp);
 		return NGX_ERROR;
@@ -1503,7 +1503,7 @@ ngx_int_t ngx_white_black_add_item(ngx_http_request_t *r, ngx_str_t *value, ngx_
 					== network_addr_data->addr)
 					)
 				{
-					snprintf(buf_temp, 256, "the ip %s is exist or be included!", t);
+					ngx_snprintf(buf_temp, 256, "the ip %s is exist or be included!", t);
 					reason->data = buf_temp;
 					reason->len = ngx_strlen(buf_temp);
 					return NGX_ERROR;
@@ -1561,10 +1561,10 @@ ngx_int_t ngx_white_black_add_item(ngx_http_request_t *r, ngx_str_t *value, ngx_
 	if (rv != NGX_OK)
 	{
 		if (rv == NGX_ERROR)
-			snprintf(buf_temp, 256, "ngx_white_black_write_to_file failed! the ip=%s  the zone_name=%s.", t, zone_name->data);
+			ngx_snprintf(buf_temp, 256, "ngx_white_black_write_to_file failed! the ip=%s  the zone_name=%s.", t, zone_name->data);
 
 		if (rv == NGX_DONE)
-			snprintf(buf_temp, 256, "the ip %s is exist", t);
+			ngx_snprintf(buf_temp, 256, "the ip %s is exist", t);
 		reason->data = buf_temp;
 		reason->len = ngx_strlen(buf_temp);
 		return NGX_ERROR;
@@ -1594,7 +1594,7 @@ ngx_int_t ngx_white_black_delete_item(ngx_http_request_t *r, ngx_str_t *value, n
 	if (   value == NULL || zone_name ==NULL 
 		|| value->len==0 || zone_name->len==0)
 	{
-		reason->data = "add_item or zone_name is NULL!";
+		reason->data = (unsigned char *)"add_item or zone_name is NULL!";
 		reason->len = ngx_strlen("add_item or zone_name is NULL!");
 		return NGX_ERROR;
 	}
@@ -1616,7 +1616,7 @@ ngx_int_t ngx_white_black_delete_item(ngx_http_request_t *r, ngx_str_t *value, n
 	{
 		if (ngx_ptocidr(value, &cdir) == NGX_ERROR)
 		{
-			snprintf(buf_temp, 256, "call ngx_ptocidr error, %s", value->data);
+			ngx_snprintf(buf_temp, 256, "call ngx_ptocidr error, %s", value->data);
 			reason->data = buf_temp;
 			reason->len = ngx_strlen(buf_temp);
 			return NGX_ERROR;
@@ -1638,7 +1638,7 @@ ngx_int_t ngx_white_black_delete_item(ngx_http_request_t *r, ngx_str_t *value, n
 
 		if (pos_network_addr_list == NULL)
 		{
-			snprintf(buf_temp, 256, "Do't find the item %s", value->data);
+			ngx_snprintf(buf_temp, 256, "Do't find the item %s", value->data);
 			reason->data = buf_temp;
 			reason->len = ngx_strlen(buf_temp);
 			return NGX_ERROR;
@@ -1647,7 +1647,7 @@ ngx_int_t ngx_white_black_delete_item(ngx_http_request_t *r, ngx_str_t *value, n
 		if (ngx_white_black_delete_from_file(value, zone_name) == NGX_ERROR)
 		{
 			pos_network_addr_list->delete = 0;
-			snprintf(buf_temp, 256, "ngx_white_black_delete_from_file failed! the ip=%s  the zone_name=%s.", value->data, zone_name->data);
+			ngx_snprintf(buf_temp, 256, "ngx_white_black_delete_from_file failed! the ip=%s  the zone_name=%s.", value->data, zone_name->data);
 			reason->data = buf_temp;
 			reason->len = ngx_strlen(buf_temp);
 			return NGX_ERROR;
@@ -1662,7 +1662,7 @@ ngx_int_t ngx_white_black_delete_item(ngx_http_request_t *r, ngx_str_t *value, n
 	ngx_shmtx_unlock(&shpool->mutex);
 	if (node == NULL)
 	{
-		snprintf(buf_temp, 256, "Do't find the item %s", value->data);
+		ngx_snprintf(buf_temp, 256, "Do't find the item %s", value->data);
 		reason->data = buf_temp;
 		reason->len = ngx_strlen(buf_temp);
 		return NGX_ERROR;
@@ -1670,7 +1670,7 @@ ngx_int_t ngx_white_black_delete_item(ngx_http_request_t *r, ngx_str_t *value, n
 
 	if (ngx_white_black_delete_from_file(value, zone_name) == NGX_ERROR)
 	{
-		snprintf(buf_temp, 256, "ngx_white_black_delete_from_file failed! the ip=%s  the zone_name=%s.", value->data, zone_name->data);
+		ngx_snprintf(buf_temp, 256, "ngx_white_black_delete_from_file failed! the ip=%s  the zone_name=%s.", value->data, zone_name->data);
 		reason->data = buf_temp;
 		reason->len = ngx_strlen(buf_temp);
 		return NGX_ERROR;
